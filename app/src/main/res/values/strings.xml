@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">Prayer Time</string>
+    <string name="night_content_description">night sky picture</string>
+    <string name="sunset_content_description">sunset sky picture</string>
+    <string name="afternoon_content_description">afternoon sky picture</string>
+    <string name="noon_content_description">noon sky pricture</string>
+    <string name="dawn_content_description">dawn sky picture</string>
+    <string name="sunday">Sunday</string>
+    <string name="monday">Monday</string>
+    <string name="tuesday">Tuesday</string>
+    <string name="wednesday">Wednesday</string>
+    <string name="thursday">Thursday</string>
+    <string name="friday">Friday</string>
+    <string name="saturday">Saturday</string>
+    <string name="location_icon">Location icon</string>
+    <string name="rabat">Rabat</string>
+    <string name="khemisset">Khemisset</string>
+</resources>
