@@ -51,8 +51,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             PrayerTimeTheme {
                 MainView(
-                    calendar,
-                    applicationContext
+                    calendar, applicationContext
                 )
             }
         }
@@ -79,21 +78,23 @@ fun getCurrentPrayerIndex(calendar: Calendar, prayers: List<Prayer>): Int {
 fun MainView(calendar: Calendar, context: Context) {
     var selectedIndex by remember { mutableIntStateOf(0) }
     var selectedCity by remember { mutableStateOf(City.Rabat) }
-    var todayPrayers by remember { mutableStateOf(listOf(Prayer(PrayerName.Fajr,calendar))) }
-    var hijriDate by remember { mutableStateOf(HijriDate("", 1)) }
+    var todayPrayers: List<Prayer> by remember { mutableStateOf(emptyList()) }
+    var hijriDate: HijriDate? by remember { mutableStateOf(null) }
 
     LaunchedEffect(Unit) {
         getSelectedCityFlow(context = context).collect {
             selectedCity = it
             val currentMonthPrayer = getCurrentMonthPrayer(it)
-            val todayPrayer =currentMonthPrayer.find { dayPrayer ->
-                calendar.get(Calendar.YEAR) == dayPrayer.day.get(Calendar.YEAR)
-                        && calendar.get(Calendar.MONTH) == dayPrayer.day.get(Calendar.MONTH)
-                        && calendar.get(Calendar.DAY_OF_MONTH) == dayPrayer.day.get(Calendar.DAY_OF_MONTH)
+            val todayPrayer = currentMonthPrayer.find { dayPrayer ->
+                calendar.get(Calendar.YEAR) == dayPrayer.day.get(Calendar.YEAR) && calendar.get(
+                    Calendar.MONTH
+                ) == dayPrayer.day.get(Calendar.MONTH) && calendar.get(Calendar.DAY_OF_MONTH) == dayPrayer.day.get(
+                    Calendar.DAY_OF_MONTH
+                )
             }
             todayPrayers = todayPrayer?.prayers ?: emptyList()
             selectedIndex = getCurrentPrayerIndex(calendar, todayPrayers)
-            hijriDate = todayPrayer?.hijriDate ?: HijriDate("", 1)
+            hijriDate = todayPrayer?.hijriDate
         }
     }
 
@@ -126,11 +127,13 @@ fun MainView(calendar: Calendar, context: Context) {
                 LocationPreview(selectedCity, onSelectedCityChange = {
                     val scope = CoroutineScope(Job())
                     scope.launch {
+                        todayPrayers = emptyList()
+                        hijriDate = null
                         setSelectedCity(context, it)
                     }
                 })
                 Spacer(modifier = Modifier.height(8.dp))
-                PrayerPreview(todayPrayers[selectedIndex])
+                PrayerPreview(prayer = if (todayPrayers.isNotEmpty()) todayPrayers[selectedIndex] else null)
             }
             Column {
                 DatePreview(hijriDate = hijriDate, calendar = calendar)

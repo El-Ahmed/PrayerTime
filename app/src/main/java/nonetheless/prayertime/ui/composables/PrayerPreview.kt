@@ -10,8 +10,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
@@ -34,7 +36,7 @@ import java.util.concurrent.TimeUnit
 private val formatter = SimpleDateFormat("HH:mm")
 
 @Composable
-fun PrayerPreview(prayer: Prayer) {
+fun PrayerPreview(prayer: Prayer?) {
     OutlinedCard(
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surface,
@@ -44,31 +46,48 @@ fun PrayerPreview(prayer: Prayer) {
             .height(170.dp)
             .fillMaxWidth()
     ) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxSize(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        )
-        {
-            Column {
-                Text(text = prayer.name.name, fontSize = 24.sp, fontWeight = FontWeight.Medium)
-                Text(text = timeDistance(prayer.time), fontSize = 12.sp)
-                Text(
-                    text = formatter.format(prayer.time.time),
-                    fontSize = 48.sp,
-                    fontWeight = FontWeight.Medium
+        if (prayer != null) {
+
+            Row(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxSize(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            )
+            {
+                Column {
+                    Text(text = prayer.name.name, fontSize = 24.sp, fontWeight = FontWeight.Medium)
+                    Text(text = timeDistance(prayer.time), fontSize = 12.sp)
+                    Text(
+                        text = formatter.format(prayer.time.time),
+                        fontSize = 48.sp,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+                Image(
+                    painter = painterResource(id = prayer.name.painter),
+                    contentDescription = stringResource(id = prayer.name.painterDescription),
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(128.dp)
+                        .clip(RoundedCornerShape(12.dp))
                 )
             }
-            Image(
-                painter = painterResource(id = prayer.name.painter),
-                contentDescription = stringResource(id = prayer.name.painterDescription),
-                contentScale = ContentScale.Crop,
+        } else {
+            Row(
                 modifier = Modifier
-                    .size(128.dp)
-                    .clip(RoundedCornerShape(12.dp))
-            )
+                    .padding(16.dp)
+                    .fillMaxSize(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.width(64.dp),
+                    color = MaterialTheme.colorScheme.secondary,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                )
+            }
         }
     }
 }

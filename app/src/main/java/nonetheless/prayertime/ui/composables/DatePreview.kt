@@ -65,7 +65,7 @@ fun calculateHijriYear(): Int {
 private val formatter = SimpleDateFormat("MMMM dd, yyyy")
 
 @Composable
-fun DatePreview(hijriDate: HijriDate, calendar: Calendar) {
+fun DatePreview(calendar: Calendar, hijriDate: HijriDate?) {
     Column {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
             Text(
@@ -75,7 +75,7 @@ fun DatePreview(hijriDate: HijriDate, calendar: Calendar) {
             )
             Divider(color = MaterialTheme.colorScheme.outlineVariant)
         }
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q && hijriDate != null) {
             Text(
                 text = "${hijriDate.day} ${arabicMonthToLatin(hijriDate.month)} ${calculateHijriYear()}",
                 fontSize = 24.sp,
