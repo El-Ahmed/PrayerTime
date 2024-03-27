@@ -29,6 +29,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import nonetheless.prayertime.data.getCurrentMonthPrayer
 import nonetheless.prayertime.data.getSelectedCityFlow
 import nonetheless.prayertime.data.setSelectedCity
 import nonetheless.prayertime.model.City
@@ -47,34 +48,10 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val calendar = Calendar.getInstance()
-        val fajrTime = Calendar.getInstance()
-        fajrTime.set(Calendar.HOUR_OF_DAY, 4)
-        fajrTime.set(Calendar.MINUTE, 4)
-        val dhuhrTime = Calendar.getInstance()
-        dhuhrTime.set(Calendar.HOUR_OF_DAY, 12)
-        dhuhrTime.set(Calendar.MINUTE, 34)
-        val asrTime = Calendar.getInstance()
-        asrTime.set(Calendar.HOUR_OF_DAY, 16)
-        asrTime.set(Calendar.MINUTE, 3)
-        val maghribTime = Calendar.getInstance()
-        maghribTime.set(Calendar.HOUR_OF_DAY, 18)
-        maghribTime.set(Calendar.MINUTE, 41)
-        val ishaTime = Calendar.getInstance()
-        ishaTime.set(Calendar.HOUR_OF_DAY, 20)
-        ishaTime.set(Calendar.MINUTE, 0)
-        val prayers = listOf(
-            Prayer(PrayerName.Fajr, fajrTime),
-            Prayer(PrayerName.Dhuhr, dhuhrTime),
-            Prayer(PrayerName.Asr, asrTime),
-            Prayer(PrayerName.Maghrib, maghribTime),
-            Prayer(PrayerName.Isha, ishaTime),
-        )
         setContent {
             PrayerTimeTheme {
                 MainView(
                     calendar,
-                    HijriDate("رمضان", 11),
-                    prayers,
                     applicationContext
                 )
             }
@@ -99,19 +76,32 @@ fun getCurrentPrayerIndex(calendar: Calendar, prayers: List<Prayer>): Int {
 
 
 @Composable
-fun MainView(calendar: Calendar, hijriDate: HijriDate, prayers: List<Prayer>, context: Context) {
-    var selectedIndex by remember { mutableIntStateOf(getCurrentPrayerIndex(calendar, prayers)) }
+fun MainView(calendar: Calendar, context: Context) {
+    var selectedIndex by remember { mutableIntStateOf(0) }
     var selectedCity by remember { mutableStateOf(City.Rabat) }
+    var todayPrayers by remember { mutableStateOf(listOf(Prayer(PrayerName.Fajr,calendar))) }
+    var hijriDate by remember { mutableStateOf(HijriDate("", 1)) }
 
     LaunchedEffect(Unit) {
-        getSelectedCityFlow(context = context).collect { selectedCity = it }
+        getSelectedCityFlow(context = context).collect {
+            selectedCity = it
+            val currentMonthPrayer = getCurrentMonthPrayer(it)
+            val todayPrayer =currentMonthPrayer.find { dayPrayer ->
+                calendar.get(Calendar.YEAR) == dayPrayer.day.get(Calendar.YEAR)
+                        && calendar.get(Calendar.MONTH) == dayPrayer.day.get(Calendar.MONTH)
+                        && calendar.get(Calendar.DAY_OF_MONTH) == dayPrayer.day.get(Calendar.DAY_OF_MONTH)
+            }
+            todayPrayers = todayPrayer?.prayers ?: emptyList()
+            selectedIndex = getCurrentPrayerIndex(calendar, todayPrayers)
+            hijriDate = todayPrayer?.hijriDate ?: HijriDate("", 1)
+        }
     }
 
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             if (event == Lifecycle.Event.ON_RESUME) {
-                selectedIndex = getCurrentPrayerIndex(calendar, prayers)
+                selectedIndex = getCurrentPrayerIndex(calendar, todayPrayers)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -140,12 +130,12 @@ fun MainView(calendar: Calendar, hijriDate: HijriDate, prayers: List<Prayer>, co
                     }
                 })
                 Spacer(modifier = Modifier.height(8.dp))
-                PrayerPreview(prayers[selectedIndex])
+                PrayerPreview(todayPrayers[selectedIndex])
             }
             Column {
                 DatePreview(hijriDate = hijriDate, calendar = calendar)
                 Spacer(modifier = Modifier.height(24.dp))
-                PrayersList(prayers, selectedIndex, onSelectedPrayer = { selectedIndex = it })
+                PrayersList(todayPrayers, selectedIndex, onSelectedPrayer = { selectedIndex = it })
             }
         }
     }
