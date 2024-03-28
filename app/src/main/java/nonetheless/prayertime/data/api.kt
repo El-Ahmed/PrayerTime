@@ -63,6 +63,7 @@ fun prayerLineToDayPrayer(
     val isha = Prayer(PrayerName.Isha, stringTimeToCalendar(calendar, line[8]))
 
     return DayPrayer(
+        0,
         city,
         calendar,
         HijriDate(hijriMonth, line[1].toInt()),

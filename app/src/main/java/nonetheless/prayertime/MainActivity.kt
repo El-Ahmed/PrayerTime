@@ -26,16 +26,18 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.room.Room
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import nonetheless.prayertime.data.AppDatabase
+import nonetheless.prayertime.data.DayPrayerDao
 import nonetheless.prayertime.data.getCurrentMonthPrayer
 import nonetheless.prayertime.data.getSelectedCityFlow
 import nonetheless.prayertime.data.setSelectedCity
 import nonetheless.prayertime.model.City
 import nonetheless.prayertime.model.HijriDate
 import nonetheless.prayertime.model.Prayer
-import nonetheless.prayertime.model.PrayerName
 import nonetheless.prayertime.ui.composables.DatePreview
 import nonetheless.prayertime.ui.composables.LocationPreview
 import nonetheless.prayertime.ui.composables.PrayerPreview
@@ -48,10 +50,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val calendar = Calendar.getInstance()
+        val db = Room.databaseBuilder(
+            applicationContext, AppDatabase::class.java, "PrayerData"
+        ).build()
         setContent {
             PrayerTimeTheme {
                 MainView(
-                    calendar, applicationContext
+                    calendar, applicationContext, db.dayPrayerDao()
                 )
             }
         }
@@ -75,7 +80,7 @@ fun getCurrentPrayerIndex(calendar: Calendar, prayers: List<Prayer>): Int {
 
 
 @Composable
-fun MainView(calendar: Calendar, context: Context) {
+fun MainView(calendar: Calendar, context: Context, prayerDao: DayPrayerDao) {
     var selectedIndex by remember { mutableIntStateOf(0) }
     var selectedCity by remember { mutableStateOf(City.Rabat) }
     var todayPrayers: List<Prayer> by remember { mutableStateOf(emptyList()) }
@@ -84,14 +89,12 @@ fun MainView(calendar: Calendar, context: Context) {
     LaunchedEffect(Unit) {
         getSelectedCityFlow(context = context).collect {
             selectedCity = it
-            val currentMonthPrayer = getCurrentMonthPrayer(it)
-            val todayPrayer = currentMonthPrayer.find { dayPrayer ->
-                calendar.get(Calendar.YEAR) == dayPrayer.day.get(Calendar.YEAR) && calendar.get(
-                    Calendar.MONTH
-                ) == dayPrayer.day.get(Calendar.MONTH) && calendar.get(Calendar.DAY_OF_MONTH) == dayPrayer.day.get(
-                    Calendar.DAY_OF_MONTH
-                )
+            val todayPrayer = prayerDao.findByCityAndDate(selectedCity, calendar) ?: run {
+                val currentMonthPrayer = getCurrentMonthPrayer(it)
+                prayerDao.insertAll(*currentMonthPrayer.toTypedArray())
+                prayerDao.findByCityAndDate(selectedCity, calendar)
             }
+
             todayPrayers = todayPrayer?.prayers ?: emptyList()
             selectedIndex = getCurrentPrayerIndex(calendar, todayPrayers)
             hijriDate = todayPrayer?.hijriDate
