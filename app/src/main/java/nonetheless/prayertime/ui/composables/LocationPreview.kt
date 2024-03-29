@@ -19,11 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -37,14 +33,19 @@ import nonetheless.prayertime.model.City
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LocationPreview(selectedCity: City, onSelectedCityChange: (city:City) -> Unit) {
+fun LocationPreview(
+    selectedCity: City,
+    onSelectedCityChange: (city: City) -> Unit,
+    showBottomSheet: Boolean,
+    setBottomSheet: (state: Boolean) -> Unit,
+    searchQuery: String,
+    setSearchQuery: (query: String) -> Unit
+) {
     val sheetState = rememberModalBottomSheetState()
     val scope = rememberCoroutineScope()
 
-    var showBottomSheet by remember { mutableStateOf(false) }
-    var searchQuery by remember { mutableStateOf("") }
     TextButton(
-        onClick = { showBottomSheet = true },
+        onClick = { setBottomSheet(true) },
     ) {
         Row {
             Icon(
@@ -55,21 +56,21 @@ fun LocationPreview(selectedCity: City, onSelectedCityChange: (city:City) -> Uni
             )
             Spacer(modifier = Modifier.width(8.dp))
 
-            Text(text = selectedCity.name, fontSize = 16.sp, fontWeight = FontWeight.Medium)
+            Text(text = selectedCity.text, fontSize = 16.sp, fontWeight = FontWeight.Medium)
         }
     }
 
     if (showBottomSheet) {
         ModalBottomSheet(
             onDismissRequest = {
-                showBottomSheet = false
+                setBottomSheet(false)
             },
             sheetState = sheetState,
             modifier = Modifier.fillMaxHeight()
         ) {
             OutlinedTextField(
                 value = searchQuery,
-                onValueChange = { searchQuery = it },
+                onValueChange = { setSearchQuery(it) },
                 singleLine = true,
                 label = { Text(text = "City") },
                 modifier = Modifier
@@ -77,18 +78,20 @@ fun LocationPreview(selectedCity: City, onSelectedCityChange: (city:City) -> Uni
                     .padding(horizontal = 16.dp)
             )
             val indexedCities =
-                City.entries.filter { it.name.lowercase().contains(searchQuery.lowercase()) }
+                City.entries.filter { it.text.lowercase().contains(searchQuery.lowercase()) }
                     .withIndex().toList()
             LazyColumn(modifier = Modifier.padding(horizontal = 16.dp)) {
                 items(indexedCities) {
-                    ListItem(headlineContent = { Text(text = it.value.name) }, modifier = Modifier.clickable {
-                        onSelectedCityChange(it.value)
-                        scope.launch { sheetState.hide() }.invokeOnCompletion {
-                            if (!sheetState.isVisible) {
-                                showBottomSheet = false
+                    ListItem(
+                        headlineContent = { Text(text = it.value.text) },
+                        modifier = Modifier.clickable {
+                            onSelectedCityChange(it.value)
+                            scope.launch { sheetState.hide() }.invokeOnCompletion {
+                                if (!sheetState.isVisible) {
+                                    setBottomSheet(false)
+                                }
                             }
-                        }
-                    })
+                        })
                     if (it.index != indexedCities.lastIndex) {
                         Divider()
                     }

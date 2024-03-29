@@ -85,6 +85,8 @@ fun MainView(calendar: Calendar, context: Context, prayerDao: DayPrayerDao) {
     var selectedCity by remember { mutableStateOf(City.Rabat) }
     var todayPrayers: List<Prayer> by remember { mutableStateOf(emptyList()) }
     var hijriDate: HijriDate? by remember { mutableStateOf(null) }
+    var showBottomSheet by remember { mutableStateOf(false) }
+    var citySearchQuery by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         getSelectedCityFlow(context = context).collect {
@@ -122,19 +124,25 @@ fun MainView(calendar: Calendar, context: Context, prayerDao: DayPrayerDao) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(horizontal = 16.dp)
-                .padding(top = 28.dp, bottom = 52.dp),
+                .padding(top = 28.dp, bottom = 64.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Column {
-                LocationPreview(selectedCity, onSelectedCityChange = {
-                    val scope = CoroutineScope(Job())
-                    scope.launch {
-                        todayPrayers = emptyList()
-                        hijriDate = null
-                        setSelectedCity(context, it)
-                    }
-                })
+                LocationPreview(
+                    selectedCity,
+                    onSelectedCityChange = {
+                        val scope = CoroutineScope(Job())
+                        scope.launch {
+                            todayPrayers = emptyList()
+                            hijriDate = null
+                            setSelectedCity(context, it)
+                        }
+                    },
+                    showBottomSheet,
+                    { showBottomSheet = it },
+                    citySearchQuery,
+                    { citySearchQuery = it })
                 Spacer(modifier = Modifier.height(8.dp))
                 PrayerPreview(prayer = if (todayPrayers.isNotEmpty()) todayPrayers[selectedIndex] else null)
             }
