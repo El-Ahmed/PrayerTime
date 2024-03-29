@@ -1,5 +1,5 @@
 # Moroccan Prayer Times App
-This Android application retrieves daily prayer times for Moroccan cities using the official API provided by the Ministry of Endowments and Islamic Affairs (Habous and Waqf) - http://www.habous.gov.ma/.
+This Android application retrieves daily prayer times for Moroccan cities using the official API provided by the Ministry (Habous and Waqf) - http://www.habous.gov.ma/.
 
 ## Features
 - Displays Fajr, Dhuhr, Asr, Maghrib, and Isha prayer times for today.
